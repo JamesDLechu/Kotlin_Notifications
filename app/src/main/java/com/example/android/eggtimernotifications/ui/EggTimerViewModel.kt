@@ -21,19 +21,29 @@ import android.content.Context
 import android.content.Intent
 import android.os.CountDownTimer
 import android.os.SystemClock
+import android.text.format.DateUtils
+import android.util.Log
 import androidx.core.app.AlarmManagerCompat
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.*
+import androidx.work.*
 import com.example.android.eggtimernotifications.receiver.AlarmReceiver
 import com.example.android.eggtimernotifications.R
+import com.example.android.eggtimernotifications.receiver.UpdatingWorker
+import com.example.android.eggtimernotifications.util.UPDATABLE_NOTIFICATION_ID
 import com.example.android.eggtimernotifications.util.cancelNotifications
 import com.example.android.eggtimernotifications.util.sendNotification
+import com.example.android.eggtimernotifications.util.sendUpdatingNotification
 import kotlinx.coroutines.*
+
+internal val Unique_Work_Timer = "UNIQUE_WORK"
 
 class EggTimerViewModel(private val app: Application) : AndroidViewModel(app) {
 
     private val REQUEST_CODE = 0
     private val TRIGGER_TIME = "TRIGGER_AT"
+
+    private val workerDataInput= "WorkerDataInput"
 
     private val minute: Long = 60_000L
     private val second: Long = 1_000L
@@ -58,8 +68,10 @@ class EggTimerViewModel(private val app: Application) : AndroidViewModel(app) {
     val isAlarmOn: LiveData<Boolean>
         get() = _alarmOn
 
+    private val workManager= WorkManager.getInstance(app)
 
     private lateinit var timer: CountDownTimer
+    private val actualTime= MutableLiveData<Long>()
 
     init {
         _alarmOn.value = PendingIntent.getBroadcast(
@@ -115,13 +127,11 @@ class EggTimerViewModel(private val app: Application) : AndroidViewModel(app) {
                 _alarmOn.value = true
                 val selectedInterval = when (timerLengthSelection) {
                     0 -> second * 10 //For testing only
-                    else ->timerLengthOptions[timerLengthSelection] * minute
+                    else -> timerLengthOptions[timerLengthSelection] * minute
                 }
+                actualTime.value= selectedInterval
                 val triggerTime = SystemClock.elapsedRealtime() + selectedInterval
 
-                // TODO: Step 1.5 get an instance of NotificationManager and call sendNotification
-
-                // TODO: Step 1.15 call cancel notification
                 val notificationManager= ContextCompat.getSystemService(
                     app,
                     NotificationManager::class.java
@@ -149,6 +159,15 @@ class EggTimerViewModel(private val app: Application) : AndroidViewModel(app) {
     private fun createTimer() {
         viewModelScope.launch {
             val triggerTime = loadTime()
+
+            workManager.enqueueUniqueWork(
+                Unique_Work_Timer,
+                ExistingWorkPolicy.REPLACE,
+                OneTimeWorkRequestBuilder<UpdatingWorker>()
+                    .setInputData(workerData(triggerTime))
+                    .build()
+            )
+
             timer = object : CountDownTimer(triggerTime, second) {
                 override fun onTick(millisUntilFinished: Long) {
                     _elapsedTime.value = triggerTime - SystemClock.elapsedRealtime()
@@ -165,12 +184,43 @@ class EggTimerViewModel(private val app: Application) : AndroidViewModel(app) {
         }
     }
 
+    private fun workerData(input: Long): Data {
+        val builder= Data.Builder()
+        builder.putLong(workerDataInput, input)
+        return builder.build()
+    }
+
+    private fun remainingTime(value: Long): String {
+        val elapsingSeconds = value / 1000
+        return if (elapsingSeconds < 60) " 0:0:$elapsingSeconds" else DateUtils.formatElapsedTime(elapsingSeconds).toString()
+    }
+
+    private fun setElapsedTime(): Int {
+        val elapsingSeconds = _elapsedTime.value!! / 1000
+        val valueX= if (elapsingSeconds < 60) elapsingSeconds.toInt() else DateUtils.formatElapsedTime(elapsingSeconds).toInt()
+
+        val actualTimeSeconds = actualTime.value!! / 1000
+        val value= if (actualTimeSeconds < 60) actualTimeSeconds.toInt() else DateUtils.formatElapsedTime(actualTimeSeconds).toInt()
+
+        return try {
+            (((value - valueX) * 100) / value)
+        }catch (e: Throwable){
+            throw e
+        }
+    }
+
     /**
      * Cancels the alarm, notification and resets the timer
      */
     private fun cancelNotification() {
         resetTimer()
+        workManager.cancelUniqueWork(Unique_Work_Timer)
         alarmManager.cancel(notifyPendingIntent)
+        val notificationManager= ContextCompat.getSystemService(
+            app,
+            NotificationManager::class.java
+        ) as NotificationManager
+        notificationManager.cancel(UPDATABLE_NOTIFICATION_ID)
     }
 
     /**

@@ -16,22 +16,29 @@
 
 package com.example.android.eggtimernotifications.util
 
+import android.app.Notification
 import android.app.NotificationManager
 import android.app.PendingIntent
 import android.content.Context
 import android.content.Intent
 import android.graphics.BitmapFactory
+import android.os.Build
+import androidx.annotation.RequiresApi
 import androidx.core.app.NotificationCompat
 import com.example.android.eggtimernotifications.MainActivity
 import com.example.android.eggtimernotifications.R
+import com.example.android.eggtimernotifications.receiver.CancelUpdatesReceiver
 import com.example.android.eggtimernotifications.receiver.SnoozeReceiver
+import javax.inject.Singleton
 
 // Notification ID.
 private val NOTIFICATION_ID = 0
 private val REQUEST_CODE = 0
 private val FLAGS = 0
 
-// TODO: Step 1.1 extension function to send messages (GIVEN)
+internal val UPDATABLE_NOTIFICATION_ID = 1
+private val REQUEST_CODE_CANCEL = 1
+
 /**
  * Builds and delivers the notification.
  *
@@ -40,10 +47,8 @@ private val FLAGS = 0
 fun NotificationManager.sendNotification(messageBody: String, applicationContext: Context) {
     // Create the content intent for the notification, which launches
     // this activity
-    // TODO: Step 1.11 create intent
     val intent= Intent(applicationContext, MainActivity::class.java)
 
-    // TODO: Step 1.12 create PendingIntent
     val pendingIntent= PendingIntent.getActivity(
         applicationContext,
         NOTIFICATION_ID,
@@ -51,7 +56,6 @@ fun NotificationManager.sendNotification(messageBody: String, applicationContext
         PendingIntent.FLAG_UPDATE_CURRENT
     )
 
-    // TODO: Step 2.0 add style
     val eggImage= BitmapFactory.decodeResource(
         applicationContext.resources,
         R.drawable.cooked_egg
@@ -61,7 +65,6 @@ fun NotificationManager.sendNotification(messageBody: String, applicationContext
         .bigPicture(eggImage)
         .bigLargeIcon(null)
 
-    // TODO: Step 2.2 add snooze action
     val snoozeIntent= Intent(
         applicationContext,
         SnoozeReceiver::class.java
@@ -74,43 +77,74 @@ fun NotificationManager.sendNotification(messageBody: String, applicationContext
         PendingIntent.FLAG_ONE_SHOT
     )
 
-    // TODO: Step 1.2 get an instance of NotificationCompat.Builder
     // Build the notification
     val builder= NotificationCompat.Builder(applicationContext,
         applicationContext.getString(R.string.egg_notification_channel_id))
 
     // TODO: Step 1.8 use the new 'breakfast' notification channel
 
-    // TODO: Step 1.3 set title, text and icon to builder
     builder.apply {
         setContentTitle(applicationContext.getString(R.string.notification_title))
         setContentText(messageBody)
         setSmallIcon(R.drawable.cooked_egg)
     }
 
-    // TODO: Step 1.13 set content intent
     builder.setContentIntent(pendingIntent)
         .setAutoCancel(true)
-        // TODO: Step 2.1 add style to builder
         .setStyle(bigPicStyle)
         .setLargeIcon(eggImage)
-
-        // TODO: Step 2.3 add snooze action
         .addAction(
             R.drawable.egg_icon,
             applicationContext.getString(R.string.snooze),
             snoozePendingIntent
         )
-
-    // TODO: Step 2.5 set priority
         .priority= NotificationCompat.PRIORITY_HIGH
 
-    // TODO: Step 1.4 call notify
     notify(NOTIFICATION_ID, builder.build())
 
 }
 
-// TODO: Step 1.14 Cancel all notifications
+/**
+ * Builds and delivers the updatable notification.
+ *
+ * @param messageBody, text to be displayed.
+ * @param applicationContext, activity context.
+ */
+
+fun NotificationManager.sendUpdatingNotification(messageBody: String, applicationContext: Context) {
+
+    // Build the notification
+    val builder= NotificationCompat.Builder(applicationContext,
+        applicationContext.getString(R.string.breakfast_notification_channel_id))
+
+    builder.apply {
+        setContentTitle(applicationContext.getString(R.string.notification_title))
+        //setProgress(100, messageBody,false)
+        setSmallIcon(R.drawable.cooked_egg)
+        setAutoCancel(true)
+        setSilent(true)
+        setContentText(messageBody)
+        //setSubText("$messageBody / 100")
+        priority= NotificationCompat.PRIORITY_DEFAULT
+    }
+
+    val cancelIntent= Intent(applicationContext, CancelUpdatesReceiver::class.java)
+    val cancelPendingIntent= PendingIntent.getBroadcast(
+        applicationContext,
+        REQUEST_CODE_CANCEL,
+        cancelIntent,
+        PendingIntent.FLAG_UPDATE_CURRENT
+    )
+
+    builder.addAction(
+        0,
+        "Cancel",
+        cancelPendingIntent
+    )
+
+    notify(UPDATABLE_NOTIFICATION_ID, builder.build())
+}
+
 /**
  *  Cancels all notifications
  */

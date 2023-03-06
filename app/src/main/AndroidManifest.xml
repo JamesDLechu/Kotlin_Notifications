@@ -45,6 +45,11 @@
                 android:enabled="true"
                 android:exported="false">
         </receiver>
+        <receiver
+            android:name=".receiver.CancelUpdatesReceiver"
+            android:enabled="true"
+            android:exported="false">
+        </receiver>
 
     </application>
 

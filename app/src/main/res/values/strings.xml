@@ -21,6 +21,7 @@
     <string name="timer_off">Stop</string>
     <string name="notification_title">Egg Timer</string>
     <string name="notification_text">Your egg is ready!!</string>
+    <string name="remaining_time">Remaining time: %s</string>
 
     <string name="fcm_message">FCM Message</string>
     <string name="message_subscribe_failed">Failed to subscribe to topic</string>
