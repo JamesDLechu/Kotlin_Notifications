@@ -23,6 +23,7 @@ import android.content.Context
 import android.content.Intent
 import android.graphics.BitmapFactory
 import android.os.Build
+import android.widget.Chronometer
 import androidx.annotation.RequiresApi
 import androidx.core.app.NotificationCompat
 import com.example.android.eggtimernotifications.MainActivity
@@ -48,7 +49,6 @@ fun NotificationManager.sendNotification(messageBody: String, applicationContext
     // Create the content intent for the notification, which launches
     // this activity
     val intent= Intent(applicationContext, MainActivity::class.java)
-
     val pendingIntent= PendingIntent.getActivity(
         applicationContext,
         NOTIFICATION_ID,
@@ -56,20 +56,12 @@ fun NotificationManager.sendNotification(messageBody: String, applicationContext
         PendingIntent.FLAG_UPDATE_CURRENT
     )
 
-    val eggImage= BitmapFactory.decodeResource(
-        applicationContext.resources,
-        R.drawable.cooked_egg
-    )
-
+    val eggImage= BitmapFactory.decodeResource(applicationContext.resources, R.drawable.cooked_egg)
     val bigPicStyle= NotificationCompat.BigPictureStyle()
         .bigPicture(eggImage)
         .bigLargeIcon(null)
 
-    val snoozeIntent= Intent(
-        applicationContext,
-        SnoozeReceiver::class.java
-    )
-
+    val snoozeIntent= Intent(applicationContext, SnoozeReceiver::class.java)
     val snoozePendingIntent= PendingIntent.getBroadcast(
         applicationContext,
         REQUEST_CODE,
@@ -81,27 +73,22 @@ fun NotificationManager.sendNotification(messageBody: String, applicationContext
     val builder= NotificationCompat.Builder(applicationContext,
         applicationContext.getString(R.string.egg_notification_channel_id))
 
-    // TODO: Step 1.8 use the new 'breakfast' notification channel
-
     builder.apply {
         setContentTitle(applicationContext.getString(R.string.notification_title))
         setContentText(messageBody)
         setSmallIcon(R.drawable.cooked_egg)
-    }
-
-    builder.setContentIntent(pendingIntent)
-        .setAutoCancel(true)
-        .setStyle(bigPicStyle)
-        .setLargeIcon(eggImage)
-        .addAction(
+        setContentIntent(pendingIntent)
+        setAutoCancel(true)
+        setStyle(bigPicStyle)
+        setLargeIcon(eggImage)
+        addAction(
             R.drawable.egg_icon,
             applicationContext.getString(R.string.snooze),
             snoozePendingIntent
         )
-        .priority= NotificationCompat.PRIORITY_HIGH
-
+        priority= NotificationCompat.PRIORITY_HIGH
+    }
     notify(NOTIFICATION_ID, builder.build())
-
 }
 
 /**
@@ -110,7 +97,6 @@ fun NotificationManager.sendNotification(messageBody: String, applicationContext
  * @param messageBody, text to be displayed.
  * @param applicationContext, activity context.
  */
-
 fun NotificationManager.sendUpdatingNotification(messageBody: String, applicationContext: Context) {
 
     // Build the notification
@@ -133,14 +119,9 @@ fun NotificationManager.sendUpdatingNotification(messageBody: String, applicatio
         applicationContext,
         REQUEST_CODE_CANCEL,
         cancelIntent,
-        PendingIntent.FLAG_UPDATE_CURRENT
+        PendingIntent.FLAG_ONE_SHOT
     )
-
-    builder.addAction(
-        0,
-        "Cancel",
-        cancelPendingIntent
-    )
+    builder.addAction(0,"Cancel", cancelPendingIntent)
 
     notify(UPDATABLE_NOTIFICATION_ID, builder.build())
 }

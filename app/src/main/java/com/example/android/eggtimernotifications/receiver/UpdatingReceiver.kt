@@ -15,6 +15,11 @@ import com.example.android.eggtimernotifications.util.sendUpdatingNotification
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 
+/**
+ * Sets up notifications for a background task.
+ * (If the app gets killed the process will regardless remain running, even if notification is not updating
+ * for 30 secs or so do to OS handling)
+ */
 class UpdatingWorker(context: Context, params: WorkerParameters):
     CoroutineWorker(context, params) {
 
@@ -47,12 +52,18 @@ class UpdatingWorker(context: Context, params: WorkerParameters):
         }
     }
 
+    /**
+     * Emulates an elapsed second
+     */
     private suspend fun sleep() {
         withContext(Dispatchers.IO) {
             Thread.sleep(1000)
         }
     }
 
+    /**
+     * Formats milliseconds into usable text
+     */
     private fun remainingTime(value: Long): String =
          DateUtils.formatElapsedTime(value).toString()
 }

@@ -13,10 +13,10 @@ import com.example.android.eggtimernotifications.util.cancelNotifications
 
 class CancelUpdatesReceiver: BroadcastReceiver() {
     override fun onReceive(context: Context, intent: Intent) {
+
+        //Specified function to execute
         val workManager= WorkManager.getInstance(context)
         workManager.cancelUniqueWork(Unique_Work_Timer)
-
-        Log.d("CancelUpdatesReceiver", "Intentando cancelar")
 
         val notificationManager= ContextCompat.getSystemService(
             context,

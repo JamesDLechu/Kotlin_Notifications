@@ -29,6 +29,7 @@ import androidx.lifecycle.*
 import androidx.work.*
 import com.example.android.eggtimernotifications.receiver.AlarmReceiver
 import com.example.android.eggtimernotifications.R
+import com.example.android.eggtimernotifications.receiver.CancelUpdatesReceiver
 import com.example.android.eggtimernotifications.receiver.UpdatingWorker
 import com.example.android.eggtimernotifications.util.UPDATABLE_NOTIFICATION_ID
 import com.example.android.eggtimernotifications.util.cancelNotifications

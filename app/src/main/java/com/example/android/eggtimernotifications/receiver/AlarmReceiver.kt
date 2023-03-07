@@ -35,7 +35,6 @@ class AlarmReceiver: BroadcastReceiver() {
             NotificationManager::class.java
         ) as NotificationManager
         notificationManager.sendNotification(context.getString(R.string.eggs_ready), context)
-
         notificationManager.cancel(UPDATABLE_NOTIFICATION_ID)
     }
 }

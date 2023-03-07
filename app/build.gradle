@@ -14,9 +14,12 @@
  * limitations under the License.
  */
 
-apply plugin: 'com.android.application'
-apply plugin: 'kotlin-android'
-apply plugin: 'kotlin-kapt'
+plugins {
+    id 'com.android.application'
+    id 'kotlin-android'
+    id 'kotlin-kapt'
+    id 'com.google.gms.google-services'
+}
 
 android {
     compileSdkVersion 33
@@ -47,6 +50,7 @@ dependencies {
     implementation 'androidx.core:core-ktx:1.9.0'
     implementation 'androidx.appcompat:appcompat:1.6.1'
     implementation 'androidx.core:core-ktx:1.9.0'
+    implementation "androidx.activity:activity-ktx:1.6.1"
     implementation 'androidx.constraintlayout:constraintlayout:2.1.4'
 
     implementation 'androidx.legacy:legacy-support-v4:1.0.0'
